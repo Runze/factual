@@ -1,5 +1,4 @@
-library(httr)
-library(rjson)
+library(ggmap)
 library(plyr)
 library(rPython)
 
@@ -32,19 +31,11 @@ resolve_addr = function(address = '', city = 'Los Angeles', state = 'CA', zipcod
   fact_res = python.call('resolve', address, city, state, zipcode)
   df_resolve = data.frame(fact_res$latitude, fact_res$longitude)
   
-  #if not found, try to use data science toolkit to resolve
+  #if not found, try to use google maps to resolve
   if (nrow(df_resolve) == 0) {
-    full_addr = gsub(' ', '%20', paste(address, city, state, zipcode))
-    url_ds = sprintf('http://www.datasciencetoolkit.org/maps/api/geocode/json?sensor=FALSE&address=%s', full_addr)
-    dat = fromJSON(paste(GET(url_ds), collapse = ''))
-    if (length(dat$results) > 0) {
-      dat = dat$results[[1]]$geometry$location
-      df_resolve = data.frame(dat['lat'], dat['lng'])  
-    }
-    else {
-      #if still not found, return 0 lat and lon to output error
-      df_resolve = data.frame(0, 0)
-    }
+    full_addr = paste(address, city, state, zipcode)
+    gg_res = geocode(full_addr)
+    df_resolve = data.frame(gg_res$lat, gg_res$lon)
   }
   
   names(df_resolve) = c('lat', 'lon')
@@ -57,7 +48,7 @@ extract_fil = function(x) {
   return (x[c('name', 'address', 'locality', 'hours_display', 'tel', 'website', 'latitude', 'longitude')])
 }
 
-#function to remove special characts
+#function to remove special characters
 clean_char = function(x) {
   if (typeof(x) == 'character') {
     x = gsub('[^[:graph:]]', ' ', x)  

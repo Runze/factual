@@ -1,4 +1,3 @@
-library(rjson)
 library(plyr)
 library(rCharts)
 options(stringsAsFactors = F)
@@ -9,7 +8,7 @@ shinyServer(function(input, output, session){
   df_r = reactive({
     r = resolve_addr(input$address, input$city, input$state, input$zipcode)
     validate(
-      need(r[1] != 0 & r[2] != 0, 'Unable to resolve address')
+      need(!is.na(r[1]) & !is.na(r[2]), 'Unable to resolve address')
     )
     return(r)
   })
